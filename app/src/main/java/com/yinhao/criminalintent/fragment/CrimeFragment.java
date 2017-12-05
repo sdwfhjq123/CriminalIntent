@@ -1,11 +1,11 @@
-package com.yinhao.criminalintent;
+package com.yinhao.criminalintent.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +13,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+
+import com.yinhao.criminalintent.R;
+import com.yinhao.criminalintent.VO.Crime;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -73,7 +76,7 @@ public class CrimeFragment extends Fragment {
         return v;
     }
 
-    private String getDateFormat(Date date) {
+    public static String getDateFormat(Date date) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         return format.format(date);
     }

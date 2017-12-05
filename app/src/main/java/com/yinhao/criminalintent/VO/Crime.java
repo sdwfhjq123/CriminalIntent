@@ -1,4 +1,4 @@
-package com.yinhao.criminalintent;
+package com.yinhao.criminalintent.VO;
 
 import java.util.Date;
 import java.util.UUID;
