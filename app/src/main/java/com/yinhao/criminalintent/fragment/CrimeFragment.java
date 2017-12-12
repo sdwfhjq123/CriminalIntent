@@ -36,6 +36,7 @@ import java.util.UUID;
 
 /**
  * Created by yinhao on 2017/12/3.
+ * 未完善动态权限
  */
 
 public class CrimeFragment extends Fragment {
