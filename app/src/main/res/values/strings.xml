@@ -13,6 +13,8 @@
     <string name="empty_crime_set">no data</string>
     <string name="crime_suspect_text">Choose Suspect</string>
     <string name="crime_report_text">Send Crime Report</string>
+    <string name="crime_call_text">Call Suspect phone</string>
+    <string name="crime_call_suspect">%s</string>
 
     <plurals name="subtitle_plural">
         <item quantity="one">%1$d crime</item>
@@ -28,4 +30,5 @@
     <string name="crime_report_suspect">the suspect is %s.</string>
     <string name="crime_report_subject">CriminalIntnet Crime Report</string>
     <string name="send_report">Send crime report via</string>
+    <string name="crime_call_no_phone_number">No number</string>
 </resources>

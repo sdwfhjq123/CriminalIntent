@@ -1,7 +1,6 @@
 package com.yinhao.criminalintent.fragment;
 
 import android.app.Activity;
-import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -56,6 +55,7 @@ public class CrimeFragment extends Fragment {
     private Button mChooseTimeButton;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallButton;
     private CheckBox mSolvedCheckBox;
 
     private int mPosition;
@@ -173,6 +173,17 @@ public class CrimeFragment extends Fragment {
             Toast.makeText(getActivity(), "have not contact app", Toast.LENGTH_SHORT).show();
         }
 
+        mCallButton = (Button) v.findViewById(R.id.crime_call);
+        handleCallSuspectButton(mCrime.getSuspectPhoneNum());
+        mCallButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri number = Uri.parse("tel:" + mCrime.getSuspectPhoneNum());
+                Intent i = new Intent(Intent.ACTION_DIAL, number);
+                startActivity(i);
+            }
+        });
+
         return v;
     }
 
@@ -227,6 +238,9 @@ public class CrimeFragment extends Fragment {
                     String[] queryFields = new String[]{
                             ContactsContract.Contacts.DISPLAY_NAME
                     };
+                    String[] queryContactId = new String[]{
+                            ContactsContract.Contacts._ID
+                    };
                     //Perform you query -the contactUri is like a "where" 执行
                     //clause here 条款
                     Cursor cursor = getActivity().getContentResolver()
@@ -240,12 +254,66 @@ public class CrimeFragment extends Fragment {
                         cursor.moveToFirst();
                         String suspect = cursor.getString(0);
                         mCrime.setSuspect(suspect);
-                        mSuspectButton.setText(suspect);
                     } finally {
                         cursor.close();
                     }
+
+                    Cursor c = getActivity().getContentResolver()
+                            .query(contactUri, queryContactId, null, null, null);
+                    try {
+                        if (c.getCount() == 0) {
+                            return;
+                        }
+                        c.moveToFirst();
+                        String contactId = c.getString(0);
+                        String phoneNum = getPhoneNumById(contactId);
+                        mCrime.setSuspectPhoneNum(phoneNum);
+                        handleCallSuspectButton(phoneNum);
+                    } finally {
+                        c.close();
+                    }
                 }
+
                 break;
+        }
+    }
+
+    private String getPhoneNumById(String contactId) {
+        // 首先找到需要查找的表的 URI
+        Uri phoneUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+        // 然后还是通过 ContentResolver 对数据进行请求
+        // 跟数据库的操作十分类似
+        Cursor c = getActivity().getContentResolver().query(
+                phoneUri,
+                // 要请求的数据是 NUMBER，即电话号码
+                new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                // 相当于 Where 语句，注意这里不是 _ID，应该是 CONTACT_ID
+                // 对于 Phone 表来说，CONTACT_ID 应该是其外键，_ID 是主键
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "= ? ",
+                new String[]{contactId},
+                null
+        );
+        String phoneNumber = null;
+        try {
+            if (c.getCount() == 0) {
+                return phoneNumber;
+            }
+            // 只取第一个数据
+            c.moveToFirst();
+            phoneNumber = c.getString(0);
+        } finally {
+            c.close();
+        }
+        return phoneNumber;
+    }
+
+    private void handleCallSuspectButton(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            mCallButton.setText(getString(R.string.crime_call_no_phone_number));
+            mCallButton.setEnabled(false);
+        } else {
+            mCallButton.setText(getString(R.string.crime_call_suspect, phoneNumber));
+            mCallButton.setEnabled(true);
         }
     }
 

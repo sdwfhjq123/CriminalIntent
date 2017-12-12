@@ -30,6 +30,7 @@ public class CrimeCursorWrapper extends CursorWrapper {
         long date = getLong(getColumnIndex(CrimeTable.Cols.DATE));
         int isSolved = getInt(getColumnIndex(CrimeTable.Cols.SOLVED));
         String suspect = getString(getColumnIndex(CrimeTable.Cols.SUSPECT));
+        String suspectPhoneNum = getString(getColumnIndex(CrimeTable.Cols.PHONE));
 
         // 然后生成一个 Model 层对象返回，免去了重复写的繁琐
         Crime crime = new Crime(UUID.fromString(uuidString));
@@ -37,6 +38,7 @@ public class CrimeCursorWrapper extends CursorWrapper {
         crime.setDate(new Date(date));
         crime.setSolved(isSolved != 0);
         crime.setSuspect(suspect);
+        crime.setSuspectPhoneNum(suspectPhoneNum);
 
         return crime;
     }
