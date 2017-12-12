@@ -23,15 +23,17 @@ public class CrimePagerActivity extends AppCompatActivity {
 
     private static final String TAG = "CrimePagerActivity";
     private static final String EXTRA_CRIME_ID = "com.yinhao.criminalintent.activity.crime_id";
+    private static final String EXTRA_CRIME_POSITION = "com.yinhao.criminalintent.activity.crime_postion";
 
     private ViewPager mViewPager;
     private Button mCrimeJumpToFirstButton;
     private Button mCrimeJumpToLastButton;
     private List<Crime> mCrimes;
 
-    public static Intent newIntent(Context context, UUID crimeId) {
+    public static Intent newIntent(Context context, UUID crimeId, int position) {
         Intent intent = new Intent(context, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
+        intent.putExtra(EXTRA_CRIME_POSITION, position);
         return intent;
     }
 
@@ -41,6 +43,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_crime_pager);
 
         UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
+        int position = getIntent().getIntExtra(EXTRA_CRIME_POSITION, 0);
 
         mViewPager = (ViewPager) findViewById(R.id.activity_crime_pager_view_pager);
         mCrimes = CrimeLab.getInstance(this).getCrimes();
@@ -56,7 +59,7 @@ public class CrimePagerActivity extends AppCompatActivity {
                     mCrimeJumpToLastButton.setClickable(false);
                 }
                 Crime crime = mCrimes.get(position);
-                return CrimeFragment.newInstance(crime.getId());
+                return CrimeFragment.newInstance(crime.getId(),position);
             }
 
             @Override
