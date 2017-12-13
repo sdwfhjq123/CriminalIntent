@@ -68,4 +68,13 @@ public class Crime {
     public void setSuspectPhoneNum(String suspectPhoneNum) {
         mSuspectPhoneNum = suspectPhoneNum;
     }
+
+    /**
+     * 照片存放path
+     *
+     * @return path
+     */
+    public String getPhotoFilename() {
+        return "IMG_" + getId().toString() + ".jpg";
+    }
 }

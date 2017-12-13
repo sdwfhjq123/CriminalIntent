@@ -11,6 +11,7 @@ import com.yinhao.criminalintent.database.CrimeCursorWrapper;
 import com.yinhao.criminalintent.database.CrimeDbSchema;
 import com.yinhao.criminalintent.database.CrimeDbSchema.CrimeTable;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +102,11 @@ public class CrimeLab {
         } finally {
             cursor.close();
         }
+    }
+
+    public File getPhotoFile(Crime crime) {
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, crime.getPhotoFilename());
     }
 
     private static ContentValues getContentValues(Crime crime) {

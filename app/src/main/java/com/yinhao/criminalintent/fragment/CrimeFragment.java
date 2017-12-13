@@ -3,14 +3,18 @@ package com.yinhao.criminalintent.fragment;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -19,19 +23,25 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.yinhao.criminalintent.R;
 import com.yinhao.criminalintent.VO.Crime;
 import com.yinhao.criminalintent.VO.CrimeLab;
+import com.yinhao.criminalintent.utils.PictureUtils;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -45,9 +55,12 @@ public class CrimeFragment extends Fragment {
     private static final String ARG_CRIME_POSITION = "crime_position";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
+    private static final String DIALOG_PICTURE = "DialogPicture";
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
+    private static final int REQUEST_PHOTO = 3;
+    private static final int REQUEST_PICTURE = 4;
 
     private Crime mCrime;
 
@@ -57,9 +70,15 @@ public class CrimeFragment extends Fragment {
     private Button mReportButton;
     private Button mSuspectButton;
     private Button mCallButton;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
     private CheckBox mSolvedCheckBox;
 
     private int mPosition;
+    private File mPhotoFile;
+    private ViewTreeObserver mPhotoObserver;
+    private int mWidth;
+    private int mHeight;
 
     public static CrimeFragment newInstance(UUID crimeId, int position) {
         Bundle args = new Bundle();
@@ -79,6 +98,8 @@ public class CrimeFragment extends Fragment {
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mPosition = getArguments().getInt(ARG_CRIME_POSITION);
         mCrime = CrimeLab.getInstance(getActivity()).getCrime(crimeId);
+        //保存照片的存储位置
+        mPhotoFile = CrimeLab.getInstance(getActivity()).getPhotoFile(mCrime);
     }
 
     @Nullable
@@ -168,10 +189,11 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setText(mCrime.getSuspect());
         }
 
+        //判断是否有应用支持
         PackageManager packageManager = getActivity().getPackageManager();
         if (packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
-            Toast.makeText(getActivity(), "have not contact app", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "have not app", Toast.LENGTH_SHORT).show();
         }
 
         mCallButton = (Button) v.findViewById(R.id.crime_call);
@@ -184,6 +206,47 @@ public class CrimeFragment extends Fragment {
                 startActivity(i);
             }
         });
+
+        mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        boolean canTakePhoto = mPhotoFile != null && captureImage.resolveActivity(packageManager) != null;
+        mPhotoButton.setEnabled(canTakePhoto);
+        mPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = FileProvider.getUriForFile(getActivity(), "com.yinhao.criminalintent.fileprovider", mPhotoFile);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+
+                List<ResolveInfo> cameraActivities = getActivity()
+                        .getPackageManager().queryIntentActivities(captureImage, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo activity : cameraActivities) {
+                    getActivity().grantUriPermission(activity.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
+        mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        mPhotoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager fm = getFragmentManager();
+                GlancePictureFragment fragment = GlancePictureFragment.newInstance(mPhotoFile.getPath());
+                fragment.setTargetFragment(CrimeFragment.this, REQUEST_PICTURE);
+                fragment.show(fm, DIALOG_PICTURE);
+            }
+        });
+        mPhotoObserver = mPhotoView.getViewTreeObserver();
+        mPhotoObserver.addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        mWidth = mPhotoView.getWidth();
+                        mHeight = mPhotoView.getHeight();
+                        updatePhotoView(mWidth, mHeight);
+                    }
+                });
+
 
         return v;
     }
@@ -274,7 +337,11 @@ public class CrimeFragment extends Fragment {
                         c.close();
                     }
                 }
-
+                break;
+            case REQUEST_PHOTO:
+                Uri uri = FileProvider.getUriForFile(getActivity(), "com.yinhao.criminalintent.fileprovider", mPhotoFile);
+                getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                updatePhotoView(mWidth, mHeight);
                 break;
         }
     }
@@ -348,5 +415,23 @@ public class CrimeFragment extends Fragment {
     public static String getDateFormat(Date date) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return format.format(date);
+    }
+
+    //    public void updatePhotoView() {
+//        if (mPhotoFile == null || !mPhotoFile.exists()) {
+//            mPhotoView.setImageDrawable(null);
+//        } else {
+//            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), getActivity());
+//            mPhotoView.setImageBitmap(bitmap);
+//        }
+//    }
+    private void updatePhotoView(int width, int height) {
+        if (mPhotoFile == null || !mPhotoFile.exists()) {
+            mPhotoView.setImageDrawable(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(
+                    mPhotoFile.getPath(), width, height);
+            mPhotoView.setImageBitmap(bitmap);
+        }
     }
 }
