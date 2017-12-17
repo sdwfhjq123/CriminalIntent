@@ -19,7 +19,7 @@ import com.yinhao.criminalintent.fragment.CrimeFragment;
 import java.util.List;
 import java.util.UUID;
 
-public class CrimePagerActivity extends AppCompatActivity {
+public class CrimePagerActivity extends AppCompatActivity implements CrimeFragment.Callbacks {
 
     private static final String TAG = "CrimePagerActivity";
     private static final String EXTRA_CRIME_ID = "com.yinhao.criminalintent.activity.crime_id";
@@ -59,7 +59,7 @@ public class CrimePagerActivity extends AppCompatActivity {
                     mCrimeJumpToLastButton.setClickable(false);
                 }
                 Crime crime = mCrimes.get(position);
-                return CrimeFragment.newInstance(crime.getId(),position);
+                return CrimeFragment.newInstance(crime.getId(), position);
             }
 
             @Override
@@ -94,5 +94,10 @@ public class CrimePagerActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(mCrimes.size() - 1);
             }
         });
+    }
+
+    @Override
+    public void onCrimeUpdated(Crime crime) {
+
     }
 }

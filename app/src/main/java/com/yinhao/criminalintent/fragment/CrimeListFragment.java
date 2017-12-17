@@ -1,5 +1,6 @@
 package com.yinhao.criminalintent.fragment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -7,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.support.v7.widget.helper.ItemTouchUIUtil;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -37,6 +40,13 @@ public class CrimeListFragment extends Fragment {
     private CrimeAdapter mAdapter;
     private int mPosition;
     private boolean mSubtitleVisible;
+    private Callbacks mCallbacks;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,8 +100,8 @@ public class CrimeListFragment extends Fragment {
             case R.id.new_crime:
                 Crime crime = new Crime();
                 CrimeLab.getInstance(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId(), 0);
-                startActivity(intent);
+                updateUI();
+                mCallbacks.onCrimeSelected(crime);
                 return true;
             case R.id.show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;
@@ -109,6 +119,12 @@ public class CrimeListFragment extends Fragment {
         outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible);
     }
 
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
     private void updateSubtitle() {
         CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
         int crimeCount = crimeLab.getCrimes().size();
@@ -121,7 +137,7 @@ public class CrimeListFragment extends Fragment {
         activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
-    private void updateUI() {
+    public void updateUI() {
         CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
         if (mAdapter == null) {
@@ -204,8 +220,9 @@ public class CrimeListFragment extends Fragment {
 //            //将列表项从位置0移动到位置5
 //            mAdapter.notifyItemMoved(0, 5);
             mPosition = mCrimeRecyclerView.getChildAdapterPosition(v);
-            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId(), mPosition);
-            startActivity(intent);
+            //Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId(), mPosition);
+            //startActivity(intent);
+            mCallbacks.onCrimeSelected(mCrime);
         }
 
         @Override
@@ -216,5 +233,12 @@ public class CrimeListFragment extends Fragment {
             mAdapter.notifyDataSetChanged();
             return true;
         }
+    }
+
+    /**
+     * Required interface for hosting activities
+     */
+    public interface Callbacks {
+        void onCrimeSelected(Crime crime);
     }
 }

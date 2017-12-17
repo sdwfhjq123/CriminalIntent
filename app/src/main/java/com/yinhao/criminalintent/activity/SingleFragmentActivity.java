@@ -2,6 +2,7 @@ package com.yinhao.criminalintent.activity;
 
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -20,10 +21,16 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
 
     public abstract Fragment createFragment();
 
+    //注解为任何时候，都应该返回有效的布局资源id
+    @LayoutRes
+    public int getLayoutResId() {
+        return R.layout.activity_fragment;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fragment);
+        setContentView(getLayoutResId());
 
         //获取FragmentManager管理器对象
         FragmentManager fm = getSupportFragmentManager();

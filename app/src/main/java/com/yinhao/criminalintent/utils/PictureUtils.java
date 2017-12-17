@@ -4,12 +4,14 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
+import android.util.Log;
 
 /**
  * Created by hp on 2017/12/13.
  */
 
 public class PictureUtils {
+    private static final String TAG = "PictureUtils";
 
     public static Bitmap getScaledBitmap(String path, Activity activity) {
         Point size = new Point();
@@ -33,6 +35,7 @@ public class PictureUtils {
             float widthScale = srcWidth / destWidth;
 
             inSampleSize = Math.round(heightScale > widthScale ? heightScale : widthScale);
+            Log.i(TAG, "getScaledBitmap: " + inSampleSize);
         }
 
         options = new BitmapFactory.Options();
